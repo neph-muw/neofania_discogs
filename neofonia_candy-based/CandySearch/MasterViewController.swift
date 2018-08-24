@@ -136,11 +136,16 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
     
   func getSearchResults(searchTerm: String, completion: @escaping QueryResult) {
       dataTask?.cancel()
-      if var urlComponents = URLComponents(string: "https://api.discogs.com/database/search ") {
+      if var urlComponents = URLComponents(string: "https://api.discogs.com/database/search") {
           urlComponents.query = "q=\(searchTerm)&key=shVnCzkOvCBQVFVXaHam&secret=ejezjLjbskGFCkermLmFtrpADJlCVBfN"
           guard let url = urlComponents.url else { return }
           dataTask = defaultSession.dataTask(with: url) { data, response, error in
               defer { self.dataTask = nil }
+            
+            DispatchQueue.main.async {
+              debugPrint(response)
+              debugPrint(data)
+            }
               if let error = error {
                   self.errorMessage += "DataTask error: " + error.localizedDescription + "\n"
               } else if let data = data,
@@ -148,12 +153,31 @@ class MasterViewController: UIViewController, UITableViewDataSource, UITableView
                   response.statusCode == 200 {
 //                  self.updateSearchResults(data)
                 do {
-                    self.candies = [try JSONDecoder().decode(Song.self, from: data)]
+                    //self.candies = try JSONDecoder().decode([Song].self, from: data)
+                  let jsonWithObjectRoot = try JSONSerialization.jsonObject(with: data, options: [])
+                  if let dictionary = jsonWithObjectRoot as? [String: Any] {
+                    if let tracks = dictionary["results"] as? [[String: Any]] {
+                      self.candies.removeAll()
+                      for track in tracks {
+                        if let trTitle = track["title"] as? String {
+                          if let trUri = track["uri"] as? String {
+                            if let trId = track["id"] as? Int {
+                              let song = Song(title: trTitle, uri: trUri, cover_image: "", resource_url: "", type: "", id: trId)
+                              self.candies.append(song)
+                            }
+                          }
+                        }
+                      }
+                      
+                    }
+                  }
                 } catch {
                     self.errorMessage = "Error catch problem on decode"
+                  
                 }
-                
+                debugPrint("SONGS = \(self.candies)")
                   DispatchQueue.main.async {
+                    self.tableView.reloadData()
                       completion(self.candies, self.errorMessage)
                   }
               }

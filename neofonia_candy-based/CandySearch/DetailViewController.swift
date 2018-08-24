@@ -38,7 +38,7 @@ class DetailViewController: UIViewController {
       if let detailDescriptionLabel = detailDescriptionLabel, let candyImageView = candyImageView {
         detailDescriptionLabel.text = detailCandy.title
         candyImageView.image = UIImage(named: detailCandy.uri)
-        title = detailCandy.id
+        title = String(detailCandy.id)
       }
     }
   }

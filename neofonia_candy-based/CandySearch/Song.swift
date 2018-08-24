@@ -14,5 +14,5 @@ struct Song: Codable {
     let cover_image : String
     let resource_url : String
     let type : String
-    let id : String
+    let id : Int
 }
